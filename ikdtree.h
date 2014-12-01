@@ -12,11 +12,17 @@ public:
 	void addnode(vector<double> &feature,int label);
 	void rebuild();
 	void search(int k, vector<double> feature);
+	int getnode(int i);
+	int getfeature(int i);
+
+
+
+	
+	vector<vector<double> > featureset;
+	vector<int> labelset;
 
 //private:
 	int featuredim;
-	vector<vector<double> > featureset;
-	vector<int> labelset;
 
 	poly<int> tree;
 
@@ -26,6 +32,6 @@ public:
 
 	double eud2(vector<double> &f1, vector<double> &f2);
 	void sort(vector<double> &feature, vector<int> &index);//sort an sequence of scalars
-	
+	void printtree(int root);
 	void dftraversal(int root, vector<double> adis);//depth first traversal
 };	

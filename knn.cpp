@@ -12,6 +12,7 @@ knn::knn(int k, vector<double>feature)
 
 void knn::add(vector<double>feature, int name)
 {
+	printf("#\n");
 	double d = eud2(center, feature);
 	for(int i=0;i<numneighbor;i++)
 	{

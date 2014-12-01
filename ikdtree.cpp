@@ -6,24 +6,47 @@ ikdtree::ikdtree(int featured)
 	featuredim = featured;
 	featureset.push_back(vector<double>(0));
 	labelset.push_back(-1);
+	neighbors=NULL;
 	return;
 }
 
 
+void ikdtree::printtree(int root)
+{	
+	if(tree.getTerm(vector<int>(1,root))==0) return;
 
+	printf("[%d]:",root);
+	printf("( ");
+	for(int i=0;i<featuredim;i++)
+	{
+		printf("%f ",featureset[tree.getTerm(vector<int>(1,root))][i]);
+	}
+	printf(") || ");
+
+	printtree(root*2+1);
+	printtree(root*2+2);
+
+	return;
+}
 
 void ikdtree::rebuild()
 {
 	tree.destroy();
 
-	vector<int> active(featureset.size());
+	vector<int> active(featureset.size()-1);
 
-	for(int i=1;i<featureset.size();i++)
+	for(int i=0;i<featureset.size()-1;i++)
 	{
-		active[i] = i;
+		active[i] = i+1;
 	}
 
 	kdtree(active, 0, 0);
+
+	//printtree(0);
+
+	//printf("type to continue\n");
+	//getchar();
+
 
 	return;
 }
@@ -31,13 +54,23 @@ void ikdtree::rebuild()
 
 void ikdtree::dftraversal(int root, vector<double> adis)
 {
-	int axis =  (int)floor(log((root+2.0)/log(2.0)))%featuredim;
+	//printf("in\n");
 	
+	if(tree.getTerm(vector<int>(1,root))==0) return;
+
+//printf("node_(%f,%f)\n",featureset[tree.getTerm(vector<int>(1,root))][0],featureset[tree.getTerm(vector<int>(1,root))][1]);
+//printf("ad = %f %f\n",adis[0],adis[1]);
+	int axis =  ((int)ceil(log(root+2.0)/log(2.0))-1)%featuredim;
+	//printf("root=%d axis=%d\n",root,axis);
+	//printf("%f\n",neighbors->getentry(axis));
+	//printf("%f\n",featureset[tree.getTerm(vector<int>(1,root))][axis]);
+	//exit(0);
 	double tempd = neighbors->getentry(axis)-featureset[tree.getTerm(vector<int>(1,root))][axis];
 	tempd *= tempd;
 
 	if(neighbors->getentry(axis)<featureset[tree.getTerm(vector<int>(1,root))][axis])
 	{
+		//printf("left\n");
 		dftraversal(root*2+1,adis);
 
 		if(adis[axis]<tempd) adis[axis] = tempd;
@@ -45,8 +78,10 @@ void ikdtree::dftraversal(int root, vector<double> adis)
 		tempd = 0;
 		for(int i=0;i<adis.size();i++)
 		{
-			tempd+=adis[axis];
+			tempd+=adis[i];
 		}
+
+		//printf("%f %f\n",tempd,neighbors->getdis(neighbors->getk()-1));
 
 		if(tempd<neighbors->getdis(neighbors->getk()-1))
 		{
@@ -57,6 +92,7 @@ void ikdtree::dftraversal(int root, vector<double> adis)
 	}
 	else
 	{
+		//printf("right\n");
 		dftraversal(root*2+2,adis);
 
 		if(adis[axis]<tempd) adis[axis] = tempd;
@@ -64,8 +100,10 @@ void ikdtree::dftraversal(int root, vector<double> adis)
 		tempd = 0;
 		for(int i=0;i<adis.size();i++)
 		{
-			tempd+=adis[axis];
+			tempd+=adis[i];
 		}
+
+		//printf("%f %f\n",tempd,neighbors->getdis(neighbors->getk()-1));
 
 		if(tempd<neighbors->getdis(neighbors->getk()-1))
 		{
@@ -81,13 +119,14 @@ void ikdtree::dftraversal(int root, vector<double> adis)
 
 void ikdtree::search(int k, vector<double> feature)
 {
-	delete neighbors;
+	if(neighbors!=NULL) delete neighbors;
+
 	neighbors = new knn(k,feature);
 
 	vector<double> adis(featuredim,0);
-	
+
 	dftraversal(0, adis);
-	
+
 	return;
 }
 
@@ -114,8 +153,10 @@ void ikdtree::addnode(vector<double> & feature, int label)
 		{
 			j = 2*j+2;
 		}
+		//printf("axis=%d node=%d feature=%d\n",i,j,k);
 	}
 
+	//printf("lastvar=%d numterm=%d\n",tree.lastVar(),tree.numTerm());
 	if(tree.lastVar()>tree.numTerm()*2)
 	{
 		rebuild();
@@ -193,11 +234,15 @@ void ikdtree::sort(vector<double> &feature, vector<int> &index)
 
 void ikdtree::kdtree(vector<int> &active, int axis, int root)
 {
-	if(active.size()==1)
+	if(active.size()==0)
 	{
-		tree.addTerm(vector<int>(1,root),active[0]);
 		return;
 	}
+	//else if(active.size()==1)
+	//{
+	//	tree.addTerm(vector<int>(1,root),active[0]);
+	//	return;
+	//}
 
 
 	vector<double> feature;
@@ -205,15 +250,17 @@ void ikdtree::kdtree(vector<int> &active, int axis, int root)
 
 	for(int i=0;i<active.size();i++)
 	{
+		//printf("i=%d/%d active[i]=%d\n",i,active.size(),active[i]);
 		feature.push_back(featureset[active[i]][axis]);	
 	}
 
 	sort(feature,index);
 
-	tree.addTerm(vector<int>(1,root),(feature[feature.size()/2]+feature[feature.size()/2+1])/2);
+	//tree.addTerm(vector<int>(1,root),(feature[feature.size()/2]+feature[feature.size()/2+1])/2);
 
 	vector<int> left, right;
 
+	
 	for(int i=0;i<active.size();i++)
 	{
 		if(index[i]<active.size()/2) 
@@ -227,20 +274,14 @@ void ikdtree::kdtree(vector<int> &active, int axis, int root)
 		else
 		{
 			right.push_back(active[i]);
-		}
-
-		
-	
+		}	
 	}
-
+	
 	vector<int> lindex, rindex;
 
 	kdtree(left,(axis+1)%featuredim,root*2+1);
+
 	kdtree(right,(axis+1)%featuredim,root*2+2);
-
-
-
-
 
 	return;
 }

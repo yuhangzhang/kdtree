@@ -1,6 +1,6 @@
 #include "ikdtree.h"
 
-int main()//test sort
+int main1()//test sort
 {
 	FILE *fpr = fopen("testinput.txt","r");
 	
