@@ -1,39 +1,36 @@
-#include "ikdtree.h"
+#include "akdtree.h"
 
-
+#define SIZE 5
 //exe k f1 f2
-int main(int argc, char *argv[])//test sort
+int main2(int argc, char *argv[])//test sort
 {
-	ikdtree testtree(2);
+	akdtree testtree(2);
 	vector<int> index;
 	vector<double> feature(2);
 
-	for(int i=0;i<10;i++)
+	for(int i=0;i<SIZE;i++)
 	{
 		feature[0] = i;
-		for(int j=0;j<10;j++)
+		for(int j=0;j<SIZE;j++)
 		{
-			//printf("ij=%d,%d\n",i,j);
+			printf("ij=%d,%d size=%d\n",i,j,testtree.size());
 			feature[1] = j;
 
-			testtree.addnode(feature,(i+j)%2);
+			if(i>j)
+				testtree.checkandadd(feature,0);
+			else
+				testtree.checkandadd(feature,1);
+			//testtree.plottree(0);
+			//getchar();
 		}
-	}
-	//printf("\n\n\n");
-	//testtree.rebuild();
-
-	int k=atoi(argv[1]);
-	vector<double> tempv(2);
-	tempv[0] = atof(argv[2]);
-	tempv[1] = atof(argv[3]);
-	testtree.search(k,tempv);
-
-
-	for(int i=0;i<k;i++)
-	{
-		printf("(%f, %f) %d\n",testtree.neighbors->getfeature(i)[0],testtree.neighbors->getfeature(i)[1], testtree.labelset[testtree.neighbors->getname(i)]);
+		//testtree.plottree(0);getchar();
 	}
 
+	testtree.plottree(0);
+	testtree.savekdtree("test1.txt");
+	testtree.rebuild();
+	testtree.plottree(0);
+	testtree.savekdtree("test2.txt");
 
 	return 0;
 }
